@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  server:
+    build: .
+    image: bincooo/single-proxy:v1.0.0
+    restart: always
+    ports:
+      - "8444:8080"
