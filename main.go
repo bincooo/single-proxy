@@ -137,10 +137,12 @@ func main() {
 			if strings.HasPrefix(k, "reg:") {
 				compile := regexp.MustCompile(k[4:])
 				if compile.MatchString(uri) {
+					log.Printf("%v\n", proxy)
 					proxy.ServeHTTP(w, r)
 					return
 				}
 			} else if strings.HasPrefix(uri, k) {
+				log.Printf("%v\n", proxy)
 				proxy.ServeHTTP(w, r)
 			}
 		}
