@@ -18,8 +18,13 @@ import (
 var (
 	pu       *url.URL = nil
 	port              = 8080
-	proxyMap          = make(map[string]*httputil.ReverseProxy)
+	proxyMap          = make(map[string]*SingleProxy)
 )
+
+type SingleProxy struct {
+	path string
+	*httputil.ReverseProxy
+}
 
 func init() {
 	_ = godotenv.Load()
@@ -114,12 +119,18 @@ func newSingle(addr string, uri []string) {
 	}
 
 	for _, it := range uri {
-		proxyMap[strings.TrimSpace(it)] = proxy
+		proxyMap[strings.TrimSpace(it)] = &SingleProxy{
+			path:         addr,
+			ReverseProxy: proxy,
+		}
 	}
+
+	log.Printf("create new Single: [ %s ] - %s\n", addr, "[ "+strings.Join(uri, ", ")+" ]")
 }
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
 		b, err := httputil.DumpRequest(r, true)
 		if err != nil {
 			log.Printf("%v\n", err)
@@ -128,23 +139,34 @@ func main() {
 		}
 
 		uri := r.RequestURI
+		log.Printf("proxy uri: %s\n", uri)
+
 		if proxy, ok := proxyMap[uri]; ok {
 			proxy.ServeHTTP(w, r)
 			return
 		}
 
+		var routeAll *SingleProxy
 		for k, proxy := range proxyMap {
 			if strings.HasPrefix(k, "reg:") {
 				compile := regexp.MustCompile(k[4:])
 				if compile.MatchString(uri) {
-					log.Printf("%v\n", proxy)
+					log.Printf("proxy target: %v\n", proxy.path)
 					proxy.ServeHTTP(w, r)
 					return
 				}
 			} else if strings.HasPrefix(uri, k) {
-				log.Printf("%v\n", proxy)
+				log.Printf("proxy target: %v\n", proxy.path)
 				proxy.ServeHTTP(w, r)
+				return
+			} else if k == "*" {
+				routeAll = proxy
 			}
+		}
+
+		if routeAll != nil {
+			log.Printf("proxy target * : %v\n", routeAll.path)
+			routeAll.ServeHTTP(w, r)
 		}
 	})
 
