@@ -141,8 +141,8 @@ func main() {
 		args := ""
 		uri := r.RequestURI
 		if index := strings.Index(uri, "?"); index >= 0 {
-			uri = uri[:index]
-			args = uri[index:]
+			uri = r.RequestURI[:index]
+			args = r.RequestURI[index:]
 		}
 		log.Printf("proxy uri: %s, args: %s\n", uri, args)
 
