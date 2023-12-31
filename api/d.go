@@ -55,7 +55,7 @@ func ProxyAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if prefix != nil {
-		log.Printf("proxy target * : %v\n\n\n", routeAll.Path())
+		log.Printf("proxy target * : %v\n\n\n", prefix.Path())
 		prefix.ServeHTTP(w, r)
 		return
 	}
