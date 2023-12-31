@@ -159,6 +159,7 @@ func main() {
 		}
 
 		var routeAll *SingleProxy
+		var prefix *SingleProxy
 		for k, proxy := range proxyMap {
 			if strings.HasPrefix(k, "reg:") {
 				compile := regexp.MustCompile(k[4:])
@@ -167,18 +168,23 @@ func main() {
 					proxy.ServeHTTP(w, r)
 					return
 				}
-			} else if strings.HasPrefix(uri, k) {
-				log.Printf("proxy target: %v\n", proxy.path)
-				proxy.ServeHTTP(w, r)
-				return
-			} else if k == "*" {
+			} else if prefix == nil && strings.HasPrefix(uri, k) {
+				prefix = proxy
+			} else if routeAll == nil && k == "*" {
 				routeAll = proxy
 			}
+		}
+
+		if prefix != nil {
+			log.Printf("proxy target * : %v\n", routeAll.path)
+			prefix.ServeHTTP(w, r)
+			return
 		}
 
 		if routeAll != nil {
 			log.Printf("proxy target * : %v\n", routeAll.path)
 			routeAll.ServeHTTP(w, r)
+			return
 		}
 	})
 
