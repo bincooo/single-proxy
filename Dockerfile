@@ -1,8 +1,15 @@
-FROM node:19.1.0-alpine3.16
-#FROM debian:bullseye-slim
-#RUN unlink /etc/localtime && ln -s /usr/share/zoneinfo/Etc/GMT-8 /etc/localtime
-ADD . /app
+FROM golang:1.20-alpine AS builder
+
 WORKDIR /app
-ADD .env .env
-RUN chmod +x "./server"
-CMD ["./server"]
+RUN apk add git && git clone https://github.com/bincooo/single-proxy.git .
+RUN go mod tidy && GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o server -trimpath
+
+FROM alpine:3.19.0
+WORKDIR /app
+
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/config.ini ./config.ini
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh","-c","./server"]
