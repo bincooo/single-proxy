@@ -138,8 +138,13 @@ func main() {
 			log.Printf("%s\n", string(b))
 		}
 
+		args := ""
 		uri := r.RequestURI
-		log.Printf("proxy uri: %s\n", uri)
+		if index := strings.Index(uri, "?"); index >= 0 {
+			uri = uri[:index]
+			args = uri[index:]
+		}
+		log.Printf("proxy uri: %s, args: %s\n", uri, args)
 
 		if proxy, ok := proxyMap[uri]; ok {
 			proxy.ServeHTTP(w, r)
