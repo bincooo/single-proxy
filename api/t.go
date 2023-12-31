@@ -82,6 +82,7 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	copyHeader(rw.Header(), partialResponse.Header, []string{
 		//"Content-Encoding",
+		"Content-Type",
 	})
 	rw.WriteHeader(partialResponse.StatusCode)
 
