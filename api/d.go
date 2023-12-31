@@ -140,9 +140,9 @@ func ProxyAPI(w http.ResponseWriter, r *http.Request) {
 
 	args := ""
 	uri := r.RequestURI
-	if index := strings.Index(uri, "?"); index >= 0 {
-		uri = r.RequestURI[:index]
-		args = r.RequestURI[index:]
+	if idx := strings.Index(uri, "?"); idx >= 0 {
+		uri = r.RequestURI[:idx]
+		args = r.RequestURI[idx:]
 	}
 	if uri == "" || uri == "/" {
 		index(r.Host, w)
