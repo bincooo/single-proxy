@@ -118,6 +118,8 @@ func newSingle(addr string, uri []string) {
 		for _, it := range uri {
 			pMapper[strings.TrimSpace(it)] = proxy
 		}
+
+		log.Printf("create new Single: [ %s ] - %s\n", addr, "[ "+strings.Join(uri, ", ")+" ]")
 		return
 	}
 
