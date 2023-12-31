@@ -61,6 +61,10 @@ func init() {
 			log.Printf("%v\n", err)
 			os.Exit(-1)
 		}
+		if response.StatusCode != 200 {
+			log.Printf("%v\n", "Error: "+string(b))
+			os.Exit(-1)
+		}
 	}
 
 	var (
