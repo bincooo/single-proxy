@@ -31,6 +31,7 @@ func ProxyAPI(w http.ResponseWriter, r *http.Request) {
 	log.Printf("proxy uri: %s, args: %s\n", uri, args)
 
 	if proxy, ok := pMapper[uri]; ok {
+		log.Printf("proxy target * : %v\n\n\n", proxy.Path())
 		proxy.ServeHTTP(w, r)
 		return
 	}
