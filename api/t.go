@@ -3,7 +3,6 @@ package api
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	fhttp "github.com/bogdanfinn/fhttp"
 	tlscli "github.com/bogdanfinn/tls-client"
 	"github.com/bogdanfinn/tls-client/profiles"
@@ -82,10 +81,10 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	copyHeader(rw.Header(), partialResponse.Header, []string{
-		//"Content-Encoding",
-		"Content-Type",
-		"Accept-Language",
-		"Cookie",
+		"Content-Encoding",
+		//"Content-Type",
+		//"Accept-Language",
+		//"Cookie",
 	})
 	rw.WriteHeader(partialResponse.StatusCode)
 
@@ -98,7 +97,7 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func copyHeader(dst map[string][]string, src map[string][]string, ignores []string) {
 	for k, vv := range src {
-		if ignores != nil && !containFor(ignores, k) {
+		if ignores != nil && containFor(ignores, k) {
 			continue
 		}
 		for _, v := range vv {
@@ -110,10 +109,6 @@ func copyHeader(dst map[string][]string, src map[string][]string, ignores []stri
 
 func copyBody(rw http.ResponseWriter, response *fhttp.Response) error {
 	reader := bufio.NewReader(response.Body)
-	cache := make([]byte, 0)
-	defer func() {
-		fmt.Println(string(cache))
-	}()
 
 	for {
 		readLine, _, err := reader.ReadLine()
@@ -126,7 +121,6 @@ func copyBody(rw http.ResponseWriter, response *fhttp.Response) error {
 			return err
 		}
 
-		cache = append(cache, readLine...)
 		_, err = rw.Write(readLine)
 		if err != nil {
 			return err
