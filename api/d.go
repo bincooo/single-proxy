@@ -33,6 +33,7 @@ func init() {
 
 	PORT = LoadEnvInt("PORT", PORT)
 	p := LoadEnvVar("PROXY", "")
+	config := LoadEnvVar("CONFIG", "")
 	if p != "" {
 		proxy, err := url.Parse(p)
 		if err != nil {
@@ -44,8 +45,22 @@ func init() {
 
 	b, err := os.ReadFile("config.ini")
 	if err != nil {
-		log.Printf("%v\n", err)
-		os.Exit(-1)
+		if config == "" {
+			log.Printf("%v\n", err)
+			os.Exit(-1)
+		}
+
+		var response *http.Response
+		response, err = http.DefaultClient.Get(config)
+		if err != nil {
+			log.Printf("%v\n", err)
+			os.Exit(-1)
+		}
+		b, err = io.ReadAll(response.Body)
+		if err != nil {
+			log.Printf("%v\n", err)
+			os.Exit(-1)
+		}
 	}
 
 	var (
