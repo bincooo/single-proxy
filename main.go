@@ -189,7 +189,7 @@ func main() {
 }
 
 func index(host string, w http.ResponseWriter) {
-	_, err := w.Write([]byte("Start by http[s]://" + host + "/v1\n\nversion: " + VERSION + "\nproject: https://github.com/bincooo/single-proxy"))
+	_, err := w.Write([]byte("Start by http[s]://" + host + "\n\nversion: " + VERSION + "\nproject: https://github.com/bincooo/single-proxy"))
 	if err != nil {
 		log.Printf("%v\n", err)
 	}
