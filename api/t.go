@@ -95,7 +95,7 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func copyHeader(dst map[string][]string, src map[string][]string, ignores []string) {
 	for k, vv := range src {
-		if ignores != nil && containFor(ignores, k) {
+		if ignores != nil && !containFor(ignores, k) {
 			continue
 		}
 		for _, v := range vv {
