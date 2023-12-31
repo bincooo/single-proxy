@@ -3,7 +3,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "config.ini",
+      "src": "/config.ini",
       "use": "@vercel/static"
     },
     {
