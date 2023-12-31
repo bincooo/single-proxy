@@ -1,0 +1,20 @@
+{
+  "name": "single-proxy",
+  "version": 2,
+  "builds": [
+    {
+      "src": "config.ini",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "/api/d.go",
+      "use": "@vercel/go"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/.*",
+      "dest": "/api/d.go"
+    }
+  ]
+}
