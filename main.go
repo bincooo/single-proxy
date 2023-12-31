@@ -19,6 +19,7 @@ var (
 	pu       *url.URL = nil
 	port              = 8080
 	proxyMap          = make(map[string]*SingleProxy)
+	VERSION           = "v1.0.0"
 )
 
 type SingleProxy struct {
@@ -134,6 +135,7 @@ func main() {
 		b, err := httputil.DumpRequest(r, true)
 		if err != nil {
 			log.Printf("%v\n", err)
+			return
 		} else {
 			log.Printf("%s\n", string(b))
 		}
@@ -144,6 +146,11 @@ func main() {
 			uri = r.RequestURI[:index]
 			args = r.RequestURI[index:]
 		}
+		if uri == "" || uri == "/" {
+			index(r.Host, w)
+			return
+		}
+
 		log.Printf("proxy uri: %s, args: %s\n", uri, args)
 
 		if proxy, ok := proxyMap[uri]; ok {
@@ -178,5 +185,12 @@ func main() {
 	log.Printf("Starting server on port %d\n", port)
 	if err := http.ListenAndServe(":"+strconv.Itoa(port), nil); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func index(host string, w http.ResponseWriter) {
+	_, err := w.Write([]byte("Start by http[s]://" + host + "/v1\n\nversion: " + VERSION + "\nproject: https://github.com/bincooo/single-proxy"))
+	if err != nil {
+		log.Printf("%v\n", err)
 	}
 }
