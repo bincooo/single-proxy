@@ -2,42 +2,26 @@ package api
 
 import (
 	"bufio"
-	"bytes"
-	fhttp "github.com/bogdanfinn/fhttp"
-	tlscli "github.com/bogdanfinn/tls-client"
-	"github.com/bogdanfinn/tls-client/profiles"
+	"github.com/bincooo/requests"
+	_ "github.com/bincooo/requests"
+	"github.com/bincooo/requests/models"
+	"github.com/bincooo/requests/url"
+	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
 	"net/textproto"
-	"os"
+	"strings"
 )
 
-var client tlscli.HttpClient
+var (
+	_   = godotenv.Load()
+	p   = LoadEnvVar("PROXY", "")
+	JA3 = "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-21,29-23-24,0"
+)
 
 type TlsProxy struct {
 	path string
-}
-
-func init() {
-	options := []tlscli.HttpClientOption{
-		tlscli.WithTimeoutSeconds(30),
-		tlscli.WithClientProfile(profiles.Chrome_105),
-		tlscli.WithNotFollowRedirects(),
-	}
-
-	c, err := tlscli.NewHttpClient(tlscli.NewNoopLogger(), options...)
-	if err != nil {
-		log.Fatal(err)
-	}
-	client = c
-	p := LoadEnvVar("PROXY", "")
-	if p != "" {
-		if err = client.SetProxy(p); err != nil {
-			log.Printf("%v\n", err)
-			os.Exit(-1)
-		}
-	}
 }
 
 func (t *TlsProxy) Path() string {
@@ -52,43 +36,34 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var request *fhttp.Request
-	request, err = fhttp.NewRequest(http.MethodGet, t.path+req.RequestURI, bytes.NewReader(b))
-	if err != nil {
-		log.Printf("http: proxy error: %v", err)
-		rw.WriteHeader(http.StatusBadGateway)
-		return
-	}
-
-	//request.Header = fhttp.Header{
-	//	"accept":          {"*/*"},
-	//	"accept-language": {"de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7"},
-	//	"user-agent":      {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"},
-	//	fhttp.HeaderOrderKey: {
-	//		"accept",
-	//		"accept-language",
-	//		"user-agent",
-	//	},
-	//}
-
-	copyHeader(request.Header, req.Header, nil)
-	var partialResponse *fhttp.Response
-	partialResponse, err = client.Do(request)
-	if err != nil {
-		log.Printf("http: proxy error: %v", err)
-		rw.WriteHeader(http.StatusBadGateway)
-		return
-	}
-
-	copyHeader(rw.Header(), partialResponse.Header, []string{
-		"Content-Encoding",
-		//"Content-Type",
-		//"Accept-Language",
-		//"Cookie",
+	request := url.NewRequest()
+	request.Headers = url.NewHeaders()
+	copyHeader(*request.Headers, req.Header, []string{
+		//"Content-Encoding",
+		"Content-Length",
 	})
-	rw.WriteHeader(partialResponse.StatusCode)
 
-	if err = copyBody(rw, partialResponse); err != nil {
+	request.Ja3 = JA3
+	request.Body = string(b)
+	if p != "" {
+		request.Proxies = p
+	}
+
+	var partialResponse *models.Response
+	partialResponse, err = requests.RequestStream(req.Method, t.path+req.RequestURI, request)
+	if err != nil {
+		log.Printf("http: proxy error: %v", err)
+		rw.WriteHeader(http.StatusBadGateway)
+		return
+	}
+
+	copyHeader(rw.Header(), partialResponse.Headers, []string{
+		"Content-Encoding",
+		"Content-Length",
+	})
+
+	rw.WriteHeader(partialResponse.StatusCode)
+	if err = copyResponse(rw, partialResponse); err != nil {
 		log.Printf("http: proxy error: %v", err)
 		rw.WriteHeader(http.StatusBadGateway)
 		return
@@ -101,13 +76,42 @@ func copyHeader(dst map[string][]string, src map[string][]string, ignores []stri
 			continue
 		}
 		for _, v := range vv {
-			//dst.Add(k, v)
 			textproto.MIMEHeader(dst).Add(k, v)
 		}
 	}
 }
 
-func copyBody(rw http.ResponseWriter, response *fhttp.Response) error {
+func hasHeader(headers map[string][]string) bool {
+	for k, vv := range headers {
+		if k != "Content-Type" {
+			continue
+		}
+		for _, v := range vv {
+			if strings.Contains(v, "text/html") {
+				return true
+			}
+			if strings.Contains(v, "application/json") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func copyResponse(rw http.ResponseWriter, response *models.Response) error {
+	log.Printf("response: %d\n", response.StatusCode)
+
+	if hasHeader(response.Headers) {
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			return err
+		}
+		encoding := response.Headers.Get("Content-Encoding")
+		requests.DecompressBody(&data, encoding)
+		_, _ = rw.Write(data)
+		return nil
+	}
+
 	reader := bufio.NewReader(response.Body)
 
 	for {
@@ -121,7 +125,7 @@ func copyBody(rw http.ResponseWriter, response *fhttp.Response) error {
 			return err
 		}
 
-		_, err = rw.Write(readLine)
+		_, err = rw.Write(append(readLine, '\n'))
 		if err != nil {
 			return err
 		}
