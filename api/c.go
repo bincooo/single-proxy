@@ -16,7 +16,7 @@ import (
 
 var (
 	pu      *url.URL = nil
-	pMapper          = make(map[string]SingleProxy)
+	POOL             = make(map[string]SingleProxy)
 	PORT             = 8080
 	VERSION          = "v1.0.0"
 )
@@ -116,7 +116,7 @@ func newSingle(addr string, uri []string) {
 		addr = addr[4:]
 		proxy := NewTlsProxy(addr)
 		for _, it := range uri {
-			pMapper[strings.TrimSpace(it)] = proxy
+			POOL[strings.TrimSpace(it)] = proxy
 		}
 
 		log.Printf("create new Single: [ %s ] - %s\n", addr, "[ "+strings.Join(uri, ", ")+" ]")
@@ -138,7 +138,7 @@ func newSingle(addr string, uri []string) {
 	}
 
 	for _, it := range uri {
-		pMapper[strings.TrimSpace(it)] = &EasyProxy{
+		POOL[strings.TrimSpace(it)] = &EasyProxy{
 			path:         addr,
 			ReverseProxy: proxy,
 		}

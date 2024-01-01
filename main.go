@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/single-proxy/api"
+	"github.com/single-proxy/web"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,7 +10,7 @@ import (
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		api.ProxyAPI(w, r)
+		web.Serve(w, r)
 	})
 
 	log.Printf("Starting server on port %d\n", api.PORT)

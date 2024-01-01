@@ -1,6 +1,7 @@
-package api
+package web
 
 import (
+	"github.com/single-proxy/api"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -8,7 +9,7 @@ import (
 	"strings"
 )
 
-func ProxyAPI(w http.ResponseWriter, r *http.Request) {
+func Serve(w http.ResponseWriter, r *http.Request) {
 	b, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		log.Printf("%v\n", err)
@@ -30,16 +31,16 @@ func ProxyAPI(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("proxy uri: %s, args: %s\n", uri, args)
 
-	if proxy, ok := pMapper[uri]; ok {
+	if proxy, ok := api.POOL[uri]; ok {
 		log.Printf("proxy target * : %v\n\n\n", proxy.Path())
 		proxy.ServeHTTP(w, r)
 		return
 	}
 
-	var prefix SingleProxy
-	var routeAll SingleProxy
+	var prefix api.SingleProxy
+	var routeAll api.SingleProxy
 
-	for k, proxy := range pMapper {
+	for k, proxy := range api.POOL {
 		if strings.HasPrefix(k, "reg:") {
 			compile := regexp.MustCompile(k[4:])
 			if compile.MatchString(uri) {
@@ -68,7 +69,7 @@ func ProxyAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func index(host string, w http.ResponseWriter) {
-	_, err := w.Write([]byte("Start by http[s]://" + host + "\n\nversion: " + VERSION + "\nproject: https://github.com/bincooo/single-proxy"))
+	_, err := w.Write([]byte("Start by http[s]://" + host + "\n\nversion: " + api.VERSION + "\nproject: https://github.com/bincooo/single-proxy"))
 	if err != nil {
 		log.Printf("%v\n", err)
 	}
