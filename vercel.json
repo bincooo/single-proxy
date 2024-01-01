@@ -3,7 +3,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "/api/{c,d,t}.go",
+      "src": "/api/{d}.go",
       "use": "@vercel/go"
     }
   ],
