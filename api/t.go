@@ -12,12 +12,14 @@ import (
 	"net/http"
 	"net/textproto"
 	"strings"
+	"time"
 )
 
 var (
-	_   = godotenv.Load()
-	p   = LoadEnvVar("PROXY", "")
-	JA3 = "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-21,29-23-24,0"
+	_       = godotenv.Load()
+	p       = LoadEnvVar("PROXY", "")
+	timeout = LoadEnvInt("TIMEOUT", 300)
+	JA3     = "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-21,29-23-24,0"
 )
 
 type TlsProxy struct {
@@ -37,6 +39,7 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	request := url.NewRequest()
+	request.Timeout = time.Duration(timeout) * time.Second
 	request.Headers = url.NewHeaders()
 	copyHeader(*request.Headers, req.Header, []string{
 		//"Content-Encoding",

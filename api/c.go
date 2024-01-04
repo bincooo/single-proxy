@@ -163,7 +163,8 @@ func LoadEnvInt(key string, defaultValue int) int {
 
 	i, err := strconv.Atoi(value)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("%v\n", err)
+		return defaultValue
 	}
 
 	return i
