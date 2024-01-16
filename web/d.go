@@ -10,7 +10,7 @@ import (
 )
 
 func Serve(w http.ResponseWriter, r *http.Request) {
-	b, err := httputil.DumpRequest(r, true)
+	b, err := httputil.DumpRequest(r, false)
 	if err != nil {
 		log.Printf("%v\n", err)
 		return
@@ -48,9 +48,11 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 				proxy.ServeHTTP(w, r)
 				return
 			}
-		} else if prefix == nil && strings.HasPrefix(uri, k) {
+		}
+		if prefix == nil && strings.HasPrefix(uri, k) {
 			prefix = proxy
-		} else if routeAll == nil && k == "*" {
+		}
+		if routeAll == nil && k == "*" {
 			routeAll = proxy
 		}
 	}
