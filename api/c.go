@@ -1,150 +1,151 @@
 package api
 
 import (
-	"bufio"
 	"bytes"
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 )
 
+const VERSION = "v1.0.0"
+
 var (
-	pu      *url.URL = nil
-	POOL             = make(map[string]SingleProxy)
-	PORT             = 8080
-	VERSION          = "v1.0.0"
+	pu            *url.URL = nil
+	ProxiesMapper          = make(map[string]Proxies)
+	PORT                   = 8080
 )
 
-type SingleProxy interface {
+type Proxies interface {
 	ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	Path() string
+	Route() Route
 }
 
-type EasyProxy struct {
+type EasyProxies struct {
 	path string
 	*httputil.ReverseProxy
+	route Route
 }
 
-func (e EasyProxy) Path() string {
+func (e EasyProxies) Path() string {
 	return e.path
 }
 
+func (e EasyProxies) Route() Route {
+	return e.route
+}
+
 func init() {
-	_ = godotenv.Load()
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	PORT = LoadEnvInt("PORT", PORT)
-	p := LoadEnvVar("PROXY", "")
-	config := LoadEnvVar("CONFIG", "")
-	if p != "" {
-		proxy, err := url.Parse(p)
-		if err != nil {
-			log.Printf("%v\n", err)
-			os.Exit(-1)
-		}
-		pu = proxy
+	vip := loadConfig()
+	PORT = vip.GetInt("port")
+	proxies = vip.GetString("proxies")
+	JA3 = vip.GetString("ja3")
+	timeout = vip.GetInt("timeout")
+
+	if PORT == 0 {
+		PORT = 8080
 	}
 
-	b, err := os.ReadFile("config.ini")
+	var mappers []Mapper
+	if err := vip.UnmarshalKey("mappers", &mappers); err != nil {
+		log.Fatal(err)
+	}
+
+	for _, mapper := range mappers {
+		newSingle(mapper)
+	}
+}
+
+func loadConfig() *viper.Viper {
+	_ = godotenv.Load()
+	config := LoadEnvVar("CONFIG", "")
+	if proxies != "" {
+		u, err := url.Parse(proxies)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pu = u
+	}
+
+	data, err := os.ReadFile("config.yaml")
 	if err != nil {
 		if config == "" {
-			log.Printf("%v\n", err)
-			os.Exit(-1)
+			log.Fatal(err)
 		}
 
 		var response *http.Response
 		response, err = http.DefaultClient.Get(config)
 		if err != nil {
-			log.Printf("%v\n", err)
-			os.Exit(-1)
+			log.Fatal(err)
 		}
-		b, err = io.ReadAll(response.Body)
+		data, err = io.ReadAll(response.Body)
 		if err != nil {
-			log.Printf("%v\n", err)
-			os.Exit(-1)
+			log.Fatal(err)
 		}
 		if response.StatusCode != 200 {
-			log.Printf("%v\n", "Error: "+string(b))
+			log.Printf("Error: %s\n", data)
 			os.Exit(-1)
 		}
 	}
 
-	var (
-		prefix          = false
-		original        = make([]byte, 0)
-		readLine []byte = nil
-	)
-
-	reader := bufio.NewReader(bytes.NewReader(b))
-	for {
-		readLine, prefix, err = reader.ReadLine()
-		if err == io.EOF {
-			return
-		}
-
-		if prefix {
-			original = append(original, readLine...)
-			continue
-		}
-
-		content := string(append(original, readLine...))
-		original = make([]byte, 0)
-
-		split := strings.Split(content, "=")
-		if len(split) < 2 {
-			continue
-		}
-
-		newSingle(split[0], strings.Split(split[1], ","))
+	vip := viper.New()
+	vip.SetConfigType("yaml")
+	if err = vip.ReadConfig(bytes.NewReader(data)); err != nil {
+		log.Fatal(err)
 	}
+
+	return vip
 }
 
-func newSingle(addr string, uri []string) {
-	target, err := url.Parse(addr)
+func newSingle(mapper Mapper) {
+	target, err := url.Parse(mapper.Addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// tls ja3
-	if strings.HasPrefix(addr, "tls:") {
-		addr = addr[4:]
-		proxy := NewTlsProxy(addr)
-		for _, it := range uri {
-			POOL[strings.TrimSpace(it)] = proxy
+	if mapper.Ja3 {
+		paths := make([]string, 0)
+		for _, route := range mapper.Routes {
+			ProxiesMapper[route.Path] = newJa3Proxies(mapper.Addr, route)
+			paths = append(paths, route.Path)
 		}
-
-		log.Printf("create new Single: [ %s ] - %s\n", addr, "[ "+strings.Join(uri, ", ")+" ]")
+		log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
 		return
 	}
 
 	// default
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.Director = func(req *http.Request) {
+	defaultProxies := httputil.NewSingleHostReverseProxy(target)
+	defaultProxies.Director = func(req *http.Request) {
 		req.Host = target.Host
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 	}
 
 	if pu != nil {
-		proxy.Transport = &http.Transport{
+		defaultProxies.Transport = &http.Transport{
 			Proxy: http.ProxyURL(pu),
 		}
 	}
 
-	for _, it := range uri {
-		POOL[strings.TrimSpace(it)] = &EasyProxy{
-			path:         addr,
-			ReverseProxy: proxy,
+	paths := make([]string, 0)
+	for _, route := range mapper.Routes {
+		paths = append(paths, route.Path)
+		ProxiesMapper[route.Path] = &EasyProxies{
+			path:         mapper.Addr,
+			ReverseProxy: defaultProxies,
 		}
 	}
 
-	log.Printf("create new Single: [ %s ] - %s\n", addr, "[ "+strings.Join(uri, ", ")+" ]")
+	log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
 }
 
 func LoadEnvVar(key, defaultValue string) string {
@@ -153,19 +154,4 @@ func LoadEnvVar(key, defaultValue string) string {
 		value = defaultValue
 	}
 	return value
-}
-
-func LoadEnvInt(key string, defaultValue int) int {
-	value, exists := os.LookupEnv(key)
-	if !exists {
-		return defaultValue
-	}
-
-	i, err := strconv.Atoi(value)
-	if err != nil {
-		log.Printf("%v\n", err)
-		return defaultValue
-	}
-
-	return i
 }

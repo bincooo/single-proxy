@@ -14,7 +14,6 @@
     }
   ],
   "env": {
-    "PORT": "8080",
-    "CONFIG": "https://raw.githubusercontent.com/bincooo/single-proxy/main/config.ini"
+    "CONFIG": "https://raw.githubusercontent.com/bincooo/single-proxy/main/config.yaml"
   }
 }

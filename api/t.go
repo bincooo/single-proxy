@@ -6,7 +6,6 @@ import (
 	_ "github.com/bincooo/requests"
 	"github.com/bincooo/requests/models"
 	"github.com/bincooo/requests/url"
-	"github.com/joho/godotenv"
 	"io"
 	"log"
 	"net/http"
@@ -16,21 +15,25 @@ import (
 )
 
 var (
-	_       = godotenv.Load()
-	p       = LoadEnvVar("PROXY", "")
-	timeout = LoadEnvInt("TIMEOUT", 300)
+	timeout int
+	proxies string
 	JA3     = "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-21,29-23-24,0"
 )
 
-type TlsProxy struct {
-	path string
+type Ja3Proxies struct {
+	path  string
+	route Route
 }
 
-func (t *TlsProxy) Path() string {
+func (t *Ja3Proxies) Path() string {
 	return t.path
 }
 
-func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (t *Ja3Proxies) Route() Route {
+	return t.route
+}
+
+func (t *Ja3Proxies) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	b, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("http: proxy error: %v", err)
@@ -48,8 +51,8 @@ func (t *TlsProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	request.Ja3 = JA3
 	request.Body = string(b)
-	if p != "" {
-		request.Proxies = p
+	if proxies != "" {
+		request.Proxies = proxies
 	}
 
 	var partialResponse *models.Response
@@ -148,8 +151,6 @@ func containFor[T comparable](slice []T, t T) bool {
 	return false
 }
 
-func NewTlsProxy(addr string) SingleProxy {
-	return &TlsProxy{
-		path: addr,
-	}
+func newJa3Proxies(addr string, route Route) Proxies {
+	return &Ja3Proxies{addr, route}
 }

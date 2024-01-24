@@ -10,7 +10,7 @@ import (
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		web.Serve(w, r)
+		web.Handler(w, r)
 	})
 
 	log.Printf("Starting server on port %d\n", api.PORT)
