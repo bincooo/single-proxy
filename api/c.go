@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 	"io"
@@ -132,7 +133,12 @@ func newSingle(mapper Mapper) {
 
 	if pu != nil {
 		defaultProxies.Transport = &http.Transport{
-			Proxy: http.ProxyURL(pu),
+			Proxy:           http.ProxyURL(pu),
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	} else {
+		defaultProxies.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 	}
 
