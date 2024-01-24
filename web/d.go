@@ -28,17 +28,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	uri := r.URL.Path
 	log.Printf("proxy uri: %s, args: %s\n", uri, r.URL.RawQuery)
 
-	var rou api.Route
-	var prefix api.Proxies
-	var routeAll api.Proxies
-
 	if mapper, ok := api.ProxiesMapper[uri]; ok {
 		log.Printf("proxy target: %v\n\n\n", mapper.Path())
 		route := mapper.Route()
 		if route.Rewrite != "" {
 			rewriteRoute(r, route)
 		}
-		if len(rou.Action) > 0 {
+		if len(route.Action) > 0 {
 			if err = execAction(r, w, route); err != nil {
 				log.Printf("Error: %v\n", err)
 				return
@@ -48,28 +44,30 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var prefix api.Proxies
+	var routeAll api.Proxies
+
 	for _, mapper := range api.ProxiesMapper {
 		route := mapper.Route()
 		if strings.HasPrefix(uri, route.Path) {
 			prefix = mapper
-			rou = route
 			break
 		}
 
 		if route.Path == "*" {
 			routeAll = mapper
-			rou = route
 			break
 		}
 	}
 
 	if prefix != nil {
 		log.Printf("proxy target * : %v\n\n\n", prefix.Path())
-		if rou.Rewrite != "" {
-			rewriteRoute(r, rou)
+		route := prefix.Route()
+		if route.Rewrite != "" {
+			rewriteRoute(r, route)
 		}
-		if len(rou.Action) > 0 {
-			if err = execAction(r, w, rou); err != nil {
+		if len(route.Action) > 0 {
+			if err = execAction(r, w, route); err != nil {
 				log.Printf("Error: %v\n", err)
 				return
 			}
@@ -80,10 +78,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	if routeAll != nil {
 		log.Printf("proxy target * : %v\n\n\n", routeAll.Path())
-		if rou.Rewrite != "" {
-			rewriteRoute(r, rou)
+		route := routeAll.Route()
+		if route.Rewrite != "" {
+			rewriteRoute(r, route)
 		}
-		if err = execAction(r, w, rou); err != nil {
+		if err = execAction(r, w, route); err != nil {
 			log.Printf("Error: %v\n", err)
 			return
 		}
@@ -122,6 +121,7 @@ func rewriteRoute(r *http.Request, route api.Route) {
 	c := regexp.MustCompile(route.Path)
 	r.URL.Path = c.ReplaceAllString(r.URL.Path, route.Rewrite)
 	r.RequestURI = r.URL.RequestURI()
+	log.Printf("rewrite route '%s' to '%s'", route.Path, r.URL.Path)
 }
 
 func execAction(req *http.Request, w http.ResponseWriter, route api.Route) error {

@@ -54,6 +54,14 @@ func init() {
 		PORT = 8080
 	}
 
+	if proxies != "" {
+		u, err := url.Parse(proxies)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pu = u
+	}
+
 	var mappers []Mapper
 	if err := vip.UnmarshalKey("mappers", &mappers); err != nil {
 		log.Fatal(err)
@@ -67,14 +75,6 @@ func init() {
 func loadConfig() *viper.Viper {
 	_ = godotenv.Load()
 	config := LoadEnvVar("CONFIG", "")
-	if proxies != "" {
-		u, err := url.Parse(proxies)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pu = u
-	}
-
 	data, err := os.ReadFile("config.yaml")
 	if err != nil {
 		if config == "" {
@@ -139,10 +139,7 @@ func newSingle(mapper Mapper) {
 	paths := make([]string, 0)
 	for _, route := range mapper.Routes {
 		paths = append(paths, route.Path)
-		ProxiesMapper[route.Path] = &EasyProxies{
-			path:         mapper.Addr,
-			ReverseProxy: defaultProxies,
-		}
+		ProxiesMapper[route.Path] = &EasyProxies{mapper.Addr, defaultProxies, route}
 	}
 
 	log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")

@@ -22,7 +22,7 @@ mappers:
   - addr: https://api.openai.com
     routes:
       - path: /proxies/v1/chat/completions
-        rewrite: /api/chat/completions
+        rewrite: /v1/chat/completions
   - addr: https://claude.ai
     ja3: true
     routes:
