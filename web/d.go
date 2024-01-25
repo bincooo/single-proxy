@@ -108,6 +108,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	// 没有匹配到地址
+	w.WriteHeader(http.StatusNotFound)
+	log.Printf("proxy not found: %v\n", uri)
 }
 
 func index(host string, w http.ResponseWriter) {
