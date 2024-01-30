@@ -37,7 +37,6 @@ mappers:
             {{rSet "referer" "https://gptscopilot.ai/gpts"}}
             {{rDel "Authorization"}}'
 ```
-
 #### vercel
 一键部署，点这里 => [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/bincooo/single-proxy&repository-name=single-proxy)
 
