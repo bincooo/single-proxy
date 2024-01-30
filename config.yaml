@@ -8,12 +8,17 @@ mappers:
   - addr: https://copilot.microsoft.com
     routes:
       - path: /turing/conversation/create
+        action:
+          - '{{rSet "host" "sydney.bing.com"}}
+             {{rSet "origin" "https://copilot.microsoft.com"}}
+             {{addr randomIp}}'
   - addr: https://sydney.bing.com
     routes:
       - path: /sydney/ChatHub
         action:
-          - '{{rSet "origin" "https://copilot.microsoft.com"}}
-             {{rSet "host" "sydney.bing.com"}}'
+          - '{{rSet "host" "sydney.bing.com"}}
+             {{rSet "origin" "https://copilot.microsoft.com"}}
+             {{rSet "X-Forwarded-For" "8.8.8.8"}}'
   # === gptscopilot 代理 ===
   - addr: https://gptscopilot.ai
     routes:

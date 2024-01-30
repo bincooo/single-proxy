@@ -56,6 +56,7 @@ func init() {
 	}
 
 	if proxies != "" {
+		log.Printf("proxies: %s", proxies)
 		u, err := url.Parse(proxies)
 		if err != nil {
 			log.Fatal(err)
@@ -129,6 +130,7 @@ func newSingle(mapper Mapper) {
 		req.Host = target.Host
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
+		req.RemoteAddr = ""
 	}
 
 	if pu != nil {
