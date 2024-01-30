@@ -2,13 +2,13 @@ package web
 
 import (
 	"github.com/single-proxy/api"
-	"html/template"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"regexp"
 	"strings"
+	"text/template"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {

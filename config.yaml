@@ -4,6 +4,17 @@ proxies: http://127.0.0.1:7890
 ja3: 771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-21,29-23-24,0
 
 mappers:
+  - # === newbing 代理 ===
+  - addr: https://copilot.microsoft.com
+    routes:
+      - path: /turing/conversation/create
+  - addr: https://sydney.bing.com
+    routes:
+      - path: /sydney/ChatHub
+        action:
+          - '{{rSet "origin" "https://copilot.microsoft.com"}}
+             {{rSet "host" "sydney.bing.com"}}'
+  # === gptscopilot 代理 ===
   - addr: https://gptscopilot.ai
     routes:
       - path: /gpts/proxies/v1/chat/completions
@@ -19,10 +30,12 @@ mappers:
              {{rSet "origin" "https://gptscopilot.ai"}}
              {{rSet "referer" "https://gptscopilot.ai/gpts"}}
              {{rDel "Authorization"}}'
+  # === openai 代理 ===
   - addr: https://api.openai.com
     routes:
       - path: /proxies/v1/chat/completions
         rewrite: /v1/chat/completions
+  # === claude 代理 ===
   - addr: https://claude.ai
     ja3: true
     routes:
