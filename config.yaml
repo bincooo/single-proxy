@@ -34,10 +34,9 @@ mappers:
       - path: /gpts/proxies/v1/chat/completions
         rewrite: /api/chat/completions
         action:
-          - '{{$var := rGet "Authorization"}}
+          - '{{$var := req_getHeader "Authorization"}}
              {{if contains $var "Bearer "}}
-               {{$var = split $var " "}}
-               {{$var = index $var 1}}
+               {{$var = index (split $var " ") 1}}
              {{end}}
              {{$var = append "__sid__=" $var}}
              {{req_setHeader "cookie" $var}}
