@@ -145,20 +145,20 @@ func execAction(req *http.Request, w http.ResponseWriter, route api.Route) error
 			return ""
 		}
 	}
-	appen := func(v1, v2 string) string {
-		return v1 + v2
-	}
+
 	funcMap := template.FuncMap{
-		"rSet":     set(req.Header.Set),
-		"rDel":     del(req.Header.Del),
-		"rGet":     req.Header.Get,
-		"wSet":     set(w.Header().Set),
-		"wDel":     del(w.Header().Del),
-		"wGet":     w.Header().Get,
-		"split":    strings.Split,
-		"contains": strings.Contains,
-		"append":   appen,
-		"randomIp": randomIp,
+		"req_setHeader": set(req.Header.Set),
+		"req_delHeader": del(req.Header.Del),
+		"req_getHeader": req.Header.Get,
+		"res_setHeader": set(w.Header().Set),
+		"res_delHeader": del(w.Header().Del),
+		"res_getHeader": w.Header().Get,
+		"split":         strings.Split,
+		"contains":      strings.Contains,
+		"randomIp":      randomIp,
+		"append": func(v1, v2 string) string {
+			return v1 + v2
+		},
 		"addr": func(addr string) string {
 			if addr != "" {
 				req.RemoteAddr = addr + ":17890"

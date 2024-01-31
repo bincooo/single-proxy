@@ -9,13 +9,13 @@ mappers:
     routes:
       - path: /turing/conversation/create
         action:
-          - '{{rSet "host" "sydney.bing.com"}}
-             {{rSet "origin" "https://copilot.microsoft.com"}}
+          - '{{req_setHeader "host" "sydney.bing.com"}}
+             {{req_setHeader "origin" "https://copilot.microsoft.com"}}
              {{addr randomIp}}'
       - path: /images/kblob
         action:
-          - '{{rSet "host" "sydney.bing.com"}}
-             {{rSet "origin" "https://copilot.microsoft.com"}}
+          - '{{req_setHeader "host" "sydney.bing.com"}}
+             {{req_setHeader "origin" "https://copilot.microsoft.com"}}
              {{addr randomIp}}'
   - addr: https://www.bing.com
     routes:
@@ -25,9 +25,9 @@ mappers:
     routes:
       - path: /sydney/ChatHub
         action:
-          - '{{rSet "host" "sydney.bing.com"}}
-             {{rSet "origin" "https://copilot.microsoft.com"}}
-             {{rSet "X-Forwarded-For" "8.8.8.8"}}'
+          - '{{req_setHeader "host" "sydney.bing.com"}}
+             {{req_setHeader "origin" "https://copilot.microsoft.com"}}
+             {{addr randomIp}}'
   # === gptscopilot 代理 ===
   - addr: https://gptscopilot.ai
     routes:
@@ -40,10 +40,10 @@ mappers:
                {{$var = index $var 1}}
              {{end}}
              {{$var = append "__sid__=" $var}}
-             {{rSet "cookie" $var}}
-             {{rSet "origin" "https://gptscopilot.ai"}}
-             {{rSet "referer" "https://gptscopilot.ai/gpts"}}
-             {{rDel "Authorization"}}'
+             {{req_setHeader "cookie" $var}}
+             {{req_setHeader "origin" "https://gptscopilot.ai"}}
+             {{req_setHeader "referer" "https://gptscopilot.ai/gpts"}}
+             {{req_delHeader "Authorization"}}'
   # === openai 代理 ===
   - addr: https://api.openai.com
     routes:
