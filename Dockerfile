@@ -8,7 +8,7 @@ FROM alpine:3.19.0
 WORKDIR /app
 
 COPY --from=builder /app/server ./server
-COPY --from=builder /app/config.ini ./config.ini
+COPY --from=builder /app/config.yaml ./config.yaml
 
 EXPOSE 8080
 
