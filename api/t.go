@@ -66,11 +66,16 @@ func (t *Ja3Proxies) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	request.Ja3 = JA3
 	request.Body = string(b)
 	if t.proxies != "" {
-		withProxies, ferr := fetchPoolWithProxies()
-		if ferr != nil {
-			log.Printf("%v", ferr)
+		if t.proxies == "auto" {
+			withProxies, ferr := fetchPoolWithProxies()
+			if ferr != nil {
+				log.Printf("%v", ferr)
+			} else {
+				request.Proxies = withProxies
+				goto label
+			}
 		} else {
-			request.Proxies = withProxies
+			request.Proxies = t.proxies
 			goto label
 		}
 	}
