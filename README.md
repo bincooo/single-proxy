@@ -12,6 +12,8 @@ GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o server -trimpath
 ```yaml
 #本地代理
 proxies: http://127.0.0.1:7890
+#本地代理池请求接口
+proxies-pool: http://xxxx.com/get
 # 服务端口
 port: 8080
 # 目标代理地址
@@ -24,6 +26,8 @@ mappers:
       - path: /gpts/proxies/v1/chat/(completions)
         # 重写路径 （支持正则写法）
         rewrite: /api/chat/$1
+        # 本地代理 auto为代理池模式，或填写代理地址http://xxx.com
+        proxies: auto
         # 前置 request、response 设置器
         action:
           - '{{$var := rGet "Authorization"}}
@@ -43,3 +47,9 @@ mappers:
 建议Fork到自己的github上，修改自己的`config.yaml`文件。并在vercel上的`Environment Variables`配置`CONFIG`
 
 `hugggingface.co`、`vercel` ip封锁，`claude.ai` 基本无法代理
+
+#### 本地代理池
+
+[monkey-soft/Scrapy_IPProxyPool](https://github.com/monkey-soft/Scrapy_IPProxyPool.git)
+
+[jhao104/proxy_pool](https://github.com/jhao104/proxy_pool.git)
