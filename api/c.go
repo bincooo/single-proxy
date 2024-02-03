@@ -3,6 +3,9 @@ package api
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 	"io"
@@ -20,6 +23,7 @@ var (
 	pu            *url.URL = nil
 	ProxiesMapper          = make(map[string]Proxies)
 	PORT                   = 8080
+	proxiesFetch  string
 )
 
 type Proxies interface {
@@ -50,13 +54,13 @@ func init() {
 	proxies = vip.GetString("proxies")
 	JA3 = vip.GetString("ja3")
 	timeout = vip.GetInt("timeout")
-
+	proxiesFetch = vip.GetString("proxies-pool")
 	if PORT == 0 {
 		PORT = 8080
 	}
 
 	if proxies != "" {
-		log.Printf("proxies: %s", proxies)
+		log.Printf("golbal proxies: %s", proxies)
 		u, err := url.Parse(proxies)
 		if err != nil {
 			log.Fatal(err)
@@ -113,11 +117,24 @@ func newSingle(mapper Mapper) {
 		log.Fatal(err)
 	}
 
+	var sp string
+	var spPu *url.URL
+	if mapper.Proxies != "" {
+		// log.Printf("single proxies: %s", proxies)
+		u, perr := url.Parse(mapper.Proxies)
+		if perr != nil {
+			log.Fatal(perr)
+		}
+
+		sp = mapper.Proxies
+		spPu = u
+	}
+
 	// tls ja3
 	if mapper.Ja3 {
 		paths := make([]string, 0)
 		for _, route := range mapper.Routes {
-			ProxiesMapper[route.Path] = newJa3Proxies(mapper.Addr, route)
+			ProxiesMapper[route.Path] = newJa3Proxies(mapper.Addr, route, sp)
 			paths = append(paths, route.Path)
 		}
 		log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
@@ -133,7 +150,26 @@ func newSingle(mapper Mapper) {
 		req.RemoteAddr = ""
 	}
 
-	if pu != nil {
+	if sp == "auto" {
+		withProxies, ferr := fetchPoolWithProxies()
+		if ferr != nil {
+			log.Printf("%v", ferr)
+		} else {
+			u, _ := url.Parse(withProxies)
+			defaultProxies.Transport = &http.Transport{
+				Proxy:           http.ProxyURL(u),
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+			goto label
+		}
+	}
+
+	if spPu != nil {
+		defaultProxies.Transport = &http.Transport{
+			Proxy:           http.ProxyURL(spPu),
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	} else if pu != nil {
 		defaultProxies.Transport = &http.Transport{
 			Proxy:           http.ProxyURL(pu),
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -143,6 +179,7 @@ func newSingle(mapper Mapper) {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 	}
+label:
 
 	paths := make([]string, 0)
 	for _, route := range mapper.Routes {
@@ -151,6 +188,48 @@ func newSingle(mapper Mapper) {
 	}
 
 	log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
+}
+
+func fetchPoolWithProxies() (string, error) {
+	if proxiesFetch == "" {
+		return "", errors.New(fmt.Sprintf("fetch proxies error: `proxiesFetch` is empty"))
+	}
+	response, err := http.Get(proxiesFetch)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("fetch proxies error: %v", err))
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return "", errors.New(fmt.Sprintf("fetch proxies error: %s", response.Status))
+	}
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("fetch proxies error: %v", err))
+	}
+
+	log.Printf("fetch proxies success: \n %s", data)
+
+	dict := make(map[string]interface{})
+	err = json.Unmarshal(data, &dict)
+	if err != nil {
+		return "", err
+	}
+
+	tempError := errors.New(fmt.Sprintf("fetch proxies [%s] is nil result", proxiesFetch))
+	if prox, ok := dict["proxy"]; ok {
+		if prox == "" {
+			return "", tempError
+		}
+
+		if https, _ok := dict["https"].(bool); _ok && https {
+			return fmt.Sprintf("https://%s", prox), nil
+		} else {
+			return fmt.Sprintf("http://%s", prox), nil
+		}
+	}
+
+	return "", tempError
 }
 
 func LoadEnvVar(key, defaultValue string) string {

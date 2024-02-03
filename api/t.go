@@ -21,9 +21,10 @@ var (
 )
 
 type Mapper struct {
-	Addr   string
-	Ja3    bool
-	Routes []Route
+	Addr    string
+	Ja3     bool
+	Proxies string
+	Routes  []Route
 }
 
 type Route struct {
@@ -33,8 +34,9 @@ type Route struct {
 }
 
 type Ja3Proxies struct {
-	path  string
-	route Route
+	proxies string
+	path    string
+	route   Route
 }
 
 func (t *Ja3Proxies) Path() string {
@@ -63,9 +65,20 @@ func (t *Ja3Proxies) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	request.Ja3 = JA3
 	request.Body = string(b)
+	if t.proxies != "" {
+		withProxies, ferr := fetchPoolWithProxies()
+		if ferr != nil {
+			log.Printf("%v", ferr)
+		} else {
+			request.Proxies = withProxies
+			goto label
+		}
+	}
+
 	if proxies != "" {
 		request.Proxies = proxies
 	}
+label:
 
 	var partialResponse *models.Response
 	partialResponse, err = requests.RequestStream(req.Method, t.path+req.RequestURI, request)
@@ -163,6 +176,6 @@ func containFor[T comparable](slice []T, t T) bool {
 	return false
 }
 
-func newJa3Proxies(addr string, route Route) Proxies {
-	return &Ja3Proxies{addr, route}
+func newJa3Proxies(addr string, route Route, proxies string) Proxies {
+	return &Ja3Proxies{proxies, addr, route}
 }
