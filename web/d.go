@@ -37,6 +37,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if route.Rewrite != "" {
 			rewriteRoute(r, route)
 		}
+		if route.Redirect != "" {
+			redirectRoute(r, w, route)
+			return
+		}
 		if len(route.Action) > 0 {
 			if err = execAction(r, w, route); err != nil {
 				log.Printf("Error: %v\n", err)
@@ -69,6 +73,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if route.Rewrite != "" {
 			rewriteRoute(r, route)
 		}
+		if route.Redirect != "" {
+			redirectRoute(r, w, route)
+			return
+		}
 		if len(route.Action) > 0 {
 			if err = execAction(r, w, route); err != nil {
 				log.Printf("Error: %v\n", err)
@@ -85,6 +93,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if route.Rewrite != "" {
 			rewriteRoute(r, route)
 		}
+		if route.Redirect != "" {
+			redirectRoute(r, w, route)
+			return
+		}
 		if err = execAction(r, w, route); err != nil {
 			log.Printf("Error: %v\n", err)
 			return
@@ -100,6 +112,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("proxy target: %v\n\n\n", mapper.Path())
 			if route.Rewrite != "" {
 				rewriteRoute(r, route)
+			}
+			if route.Redirect != "" {
+				redirectRoute(r, w, route)
+				return
 			}
 			if len(route.Action) > 0 {
 				if err = execAction(r, w, route); err != nil {
@@ -129,6 +145,13 @@ func rewriteRoute(r *http.Request, route api.Route) {
 	r.URL.Path = c.ReplaceAllString(r.URL.Path, route.Rewrite)
 	r.RequestURI = r.URL.RequestURI()
 	log.Printf("rewrite route '%s' to '%s'", route.Path, r.URL.Path)
+}
+
+func redirectRoute(r *http.Request, w http.ResponseWriter, route api.Route) {
+	c := regexp.MustCompile(route.Path)
+	redirect := c.ReplaceAllString(r.URL.Path, route.Redirect)
+	log.Printf("redirect route '%s' to '%s'", route.Path, redirect)
+	http.Redirect(w, r, redirect, http.StatusFound)
 }
 
 func execAction(req *http.Request, w http.ResponseWriter, route api.Route) error {

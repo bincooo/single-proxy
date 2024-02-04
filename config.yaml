@@ -92,3 +92,5 @@ mappers:
           - '{{req_setHeader "host" "claude.ai"}}
              {{req_setHeader "origin" "https://claude.ai"}}
              {{req_setHeader "referer" "https://claude.ai"}}'
+      - path: /claude$
+        redirect: /claude/

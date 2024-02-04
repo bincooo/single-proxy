@@ -29,10 +29,11 @@ type Mapper struct {
 }
 
 type Route struct {
-	Path    string
-	Rewrite string
-	Action  []string
-	Content []string
+	Path     string
+	Rewrite  string
+	Redirect string
+	Action   []string
+	Content  []string
 }
 
 type Ja3Proxies struct {
