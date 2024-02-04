@@ -19,7 +19,7 @@ mappers:
         action:
           - '{{req_setHeader "host" "sydney.bing.com"}}
              {{req_setHeader "origin" "https://copilot.microsoft.com"}}
-             {{addr randomIp}}'
+             {{req_setHeader "referer" "https://copilot.microsoft.com"}}'
   - addr: https://www.bing.com
     routes:
       - path: /copilot/codex/plugins/available/get
