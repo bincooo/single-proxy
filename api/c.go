@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"text/template"
 )
 
 const VERSION = "v1.0.0"
@@ -137,7 +138,18 @@ func newSingle(mapper Mapper) {
 			ProxiesMapper[route.Path] = newJa3Proxies(mapper.Addr, route, sp)
 			paths = append(paths, route.Path)
 		}
-		log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
+		log.Printf("create new Single: %s <ja3> - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
+		return
+	}
+
+	// html static
+	if mapper.Static {
+		paths := make([]string, 0)
+		for _, route := range mapper.Routes {
+			ProxiesMapper[route.Path] = newStaticProxies(mapper.Addr, route, sp)
+			paths = append(paths, route.Path)
+		}
+		log.Printf("create new Single: %s <static> - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
 		return
 	}
 
@@ -187,7 +199,7 @@ label:
 		ProxiesMapper[route.Path] = &EasyProxies{mapper.Addr, defaultProxies, route}
 	}
 
-	log.Printf("create new Single: %s - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
+	log.Printf("create new Single: %s <default> - %s\n", mapper.Addr, "[ "+strings.Join(paths, ", ")+" ]")
 }
 
 func fetchPoolWithProxies() (string, error) {
@@ -238,4 +250,36 @@ func LoadEnvVar(key, defaultValue string) string {
 		value = defaultValue
 	}
 	return value
+}
+
+func execAction(body string, contents []string) (string, error) {
+	t := template.New("context")
+
+	funcMap := template.FuncMap{
+		"split":    strings.Split,
+		"contains": strings.Contains,
+		"replace": func(o, n string) string {
+			body = strings.Replace(body, o, n, -1)
+			return ""
+		},
+		"replaceAll": func(o, n string) string {
+			body = strings.ReplaceAll(body, o, n)
+			return ""
+		},
+		"append": func(v1, v2 string) string {
+			return v1 + v2
+		},
+	}
+
+	t.Funcs(funcMap)
+	for _, tmplVar := range contents {
+		tmpl, err := t.Parse(tmplVar)
+		if err != nil {
+			return body, err
+		}
+		if err = tmpl.Execute(os.Stdout, nil); err != nil {
+			return body, err
+		}
+	}
+	return body, nil
 }

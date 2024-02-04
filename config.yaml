@@ -58,3 +58,37 @@ mappers:
     routes:
       - path: /claude/api/(.+)
         rewrite: /api/$1
+  - addr: https://claude.ai
+    static: true
+    routes:
+      - path: /_next/static
+        action:
+          - '{{req_setHeader "host" "claude.ai"}}
+             {{req_setHeader "origin" "https://claude.ai"}}
+             {{req_setHeader "referer" "https://claude.ai"}}'
+        content:
+          - '{{replaceAll "/api/" "/claude/api/"}}
+             {{replaceAll "/chats" "/claude/chats"}}
+             {{replaceAll "/chat/" "/claude/chat/"}}
+             {{replaceAll "sw.js" "/claude/sw.js"}}
+             {{replaceAll "/login" "/claude/login"}}
+             {{replaceAll "/logout" "/claude/logout"}}
+             {{replaceAll "settings/billing" "/claude/settings/billing"}}'
+      - path: /cdn-cgi
+        action:
+          - '{{req_setHeader "host" "claude.ai"}}
+             {{req_setHeader "origin" "https://claude.ai"}}
+             {{req_setHeader "referer" "https://claude.ai"}}'
+      - path: /images
+      - path: /sentry
+      - path: /manifest.json
+        action:
+          - '{{req_setHeader "host" "claude.ai"}}
+             {{req_setHeader "origin" "https://claude.ai"}}
+             {{req_setHeader "referer" "https://claude.ai"}}'
+      - path: /claude/(.?)
+        rewrite: /$1
+        action:
+          - '{{req_setHeader "host" "claude.ai"}}
+             {{req_setHeader "origin" "https://claude.ai"}}
+             {{req_setHeader "referer" "https://claude.ai"}}'

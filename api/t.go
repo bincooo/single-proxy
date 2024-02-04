@@ -23,6 +23,7 @@ var (
 type Mapper struct {
 	Addr    string
 	Ja3     bool
+	Static  bool
 	Proxies string
 	Routes  []Route
 }
@@ -31,6 +32,7 @@ type Route struct {
 	Path    string
 	Rewrite string
 	Action  []string
+	Content []string
 }
 
 type Ja3Proxies struct {
