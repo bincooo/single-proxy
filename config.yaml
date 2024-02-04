@@ -8,12 +8,14 @@ mappers:
   # === newbing 代理 ===
   - addr: https://copilot.microsoft.com
     routes:
-      - path: /turing/conversation/create
+      - path: /copilot/turing/conversation/create
+        rewrite: /turing/conversation/create
         action:
           - '{{req_setHeader "host" "sydney.bing.com"}}
              {{req_setHeader "origin" "https://copilot.microsoft.com"}}
              {{addr randomIp}}'
-      - path: /images/kblob
+      - path: /copilot/images/kblob
+        rewrite: /images/kblob
         action:
           - '{{req_setHeader "host" "sydney.bing.com"}}
              {{req_setHeader "origin" "https://copilot.microsoft.com"}}
@@ -54,6 +56,5 @@ mappers:
     #proxies: auto
     ja3: true
     routes:
-      - path: /api/organizations
-      - path: /api/append_message
-      - path: /api/retry_message
+      - path: /claude/api/(.+)
+        rewrite: /api/$1
