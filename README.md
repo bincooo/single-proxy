@@ -4,6 +4,26 @@
 
 默认配置文件已提供了claude镜像代理、ChatGPT API代理、NewBing API代理、gptscopilot代理
 
+代理路径如下：`http://127.0.0.1:8080` + `下方代理路径`
+```bash
+# NewBing 代理
+/copilot/turing/conversation/create
+/sydney/ChatHub
+
+/copilot/codex/plugins/available/get
+/copilot/images/kblob
+
+# gptscopilot 代理
+/gpts/proxies/v1/chat/completions
+
+# ChatGPT 代理
+/proxies/v1/chat/completions
+
+# claude 代理
+/claude
+/claude/api*
+```
+
 #### 编译
 ```bash
 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o server -trimpath
@@ -48,7 +68,6 @@ mappers:
 
 建议Fork到自己的github上，修改自己的`config.yaml`文件。并在vercel上的`Environment Variables`配置`CONFIG`
 
-`hugggingface.co`、`vercel` ip封锁，`claude.ai` 基本无法代理
 
 #### 本地代理池
 
