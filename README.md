@@ -60,7 +60,7 @@ mappers:
             {{req_setHeader "cookie" $var}}
             {{req_setHeader "origin" "https://gptscopilot.ai"}}
             {{req_setHeader "referer" "https://gptscopilot.ai/gpts"}}
-            {{req_DelHeader "Authorization"}}'
+            {{req_delHeader "Authorization"}}'
 ```
 #### vercel
 一键部署，点这里 => [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/bincooo/single-proxy&repository-name=single-proxy)
