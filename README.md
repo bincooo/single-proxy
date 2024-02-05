@@ -52,7 +52,7 @@ mappers:
         proxies: auto
         # 前置 request、response 设置器
         action:
-          - '{{$var := rGet "Authorization"}}
+          - '{{$var := req_getHeader "Authorization"}}
             {{if contains $var "Bearer "}}
               {{$var = index (split $var " ") 1}}
             {{end}}
