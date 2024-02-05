@@ -54,14 +54,13 @@ mappers:
         action:
           - '{{$var := rGet "Authorization"}}
             {{if contains $var "Bearer "}}
-            {{$var = split $var " "}}
-            {{$var = index $var 1}}
+              {{$var = index (split $var " ") 1}}
             {{end}}
             {{$var = append "__sid__=" $var}}
-            {{rSet "cookie" $var}}
-            {{rSet "origin" "https://gptscopilot.ai"}}
-            {{rSet "referer" "https://gptscopilot.ai/gpts"}}
-            {{rDel "Authorization"}}'
+            {{req_setHeader "cookie" $var}}
+            {{req_setHeader "origin" "https://gptscopilot.ai"}}
+            {{req_setHeader "referer" "https://gptscopilot.ai/gpts"}}
+            {{req_DelHeader "Authorization"}}'
 ```
 #### vercel
 一键部署，点这里 => [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/bincooo/single-proxy&repository-name=single-proxy)
