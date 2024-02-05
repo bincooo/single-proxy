@@ -69,6 +69,7 @@ mappers:
              {{replaceAll "sw.js" "/claude/sw.js"}}
              {{replaceAll "/login" "/claude/login"}}
              {{replaceAll "/logout" "/claude/logout"}}
+             {{replaceAll "/claude/api/auth/claude/logout" "/claude/api/auth/logout"}}
              {{replaceAll "settings/profile" "claude/settings/profile"}}
              {{replaceAll "settings/billing" "claude/settings/billing"}}'
       - path: /cdn-cgi
