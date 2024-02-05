@@ -2,6 +2,8 @@
 
 仿 `nginx` 代理服务，支持本地代理、ja3、 websocket
 
+默认配置文件已提供了claude镜像代理、ChatGPT API代理、NewBing API代理、gptscopilot代理
+
 #### 编译
 ```bash
 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o server -trimpath
