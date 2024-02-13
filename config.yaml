@@ -1,6 +1,7 @@
 port: 8080
 timeout: 300
-proxies: http://127.0.0.1:7890
+# 如需本地代理请删除下面一行proxies前的`#`号
+#proxies: http://127.0.0.1:7890
 #proxies-pool: https://xxx.com
 ja3: 771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-21,29-23-24,0
 
@@ -8,13 +9,13 @@ mappers:
   # === newbing 代理 ===
   - addr: https://copilot.microsoft.com
     routes:
-      - path: /copilot/turing/conversation/create
+      - path: ^/copilot/turing/conversation/create
         rewrite: /turing/conversation/create
         action:
           - '{{req_setHeader "host" "sydney.bing.com"}}
              {{req_setHeader "origin" "https://copilot.microsoft.com"}}
              {{addr randomIp}}'
-      - path: /copilot/images/kblob
+      - path: ^/copilot/images/kblob
         rewrite: /images/kblob
         action:
           - '{{req_setHeader "host" "sydney.bing.com"}}
@@ -22,20 +23,26 @@ mappers:
              {{req_setHeader "referer" "https://copilot.microsoft.com"}}'
   - addr: https://www.bing.com
     routes:
-      - path: /copilot/codex/plugins/available/get
+      - path: ^/copilot/codex/plugins/available/get
         rewrite: /codex/plugins/available/get
   - addr: https://sydney.bing.com
     routes:
-      - path: /sydney/ChatHub
+      - path: ^/copilot/sydney/ChatHub
+        rewrite: /sydney/ChatHub
         action:
           - '{{req_setHeader "host" "sydney.bing.com"}}
              {{req_setHeader "origin" "https://copilot.microsoft.com"}}
              {{addr randomIp}}'
+  # === gemini 代理 ===
+  - addr: https://generativelanguage.googleapis.com
+    routes:
+      - path: ^/google/v1/(.+)
+        rewrite: /v1/$1
   # === gptscopilot 代理 ===
   - addr: https://gptscopilot.ai
     routes:
-      - path: /gpts/proxies/v1/chat/completions
-        rewrite: /api/chat/completions
+      - path: ^/gpts/proxies/v1/(.+)
+        rewrite: /api/$1
         action:
           - '{{$var := req_getHeader "Authorization"}}
              {{if contains $var "Bearer "}}
@@ -49,8 +56,8 @@ mappers:
   # === openai 代理 ===
   - addr: https://api.openai.com
     routes:
-      - path: /proxies/v1/chat/completions
-        rewrite: /v1/chat/completions
+      - path: ^/proxies/v1/(.+)
+        rewrite: /v1/$1
   # === claude 代理 ===
   - addr: https://claude.ai
     #proxies: auto
