@@ -8,7 +8,7 @@
 ```bash
 # NewBing 代理
 /copilot/turing/conversation/create
-/sydney/ChatHub
+/copilot/sydney/ChatHub
 
 /copilot/codex/plugins/available/get
 /copilot/images/kblob
@@ -16,8 +16,11 @@
 # gptscopilot 代理
 /gpts/proxies/v1/chat/completions
 
+# gemini 代理
+/google/v1/*
+
 # ChatGPT 代理
-/proxies/v1/chat/completions
+/proxies/v1/*
 
 # claude 代理
 /claude
