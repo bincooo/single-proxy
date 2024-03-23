@@ -58,26 +58,3 @@ mappers:
     routes:
       - path: /claude/api/(.+)
         rewrite: /api/$1
-  - addr: https://claude.ai
-    static: true
-    routes:
-      - path: /_next/static
-        content:
-          - '{{replaceAll "/api/" "/claude/api/"}}
-             {{replaceAll "/chats" "/claude/chats"}}
-             {{replaceAll "/chat/" "/claude/chat/"}}
-             {{replaceAll "sw.js" "/claude/sw.js"}}
-             {{replaceAll "/login" "/claude/login"}}
-             {{replaceAll "/logout" "/claude/logout"}}
-             {{replaceAll "/claude/api/auth/claude/logout" "/claude/api/auth/logout"}}
-             {{replaceAll "settings/profile" "claude/settings/profile"}}
-             {{replaceAll "settings/billing" "claude/settings/billing"}}'
-      - path: /cdn-cgi
-      - path: /images
-      - path: /sentry
-      - path: /manifest.json
-      - path: /onboarding
-      - path: /claude/(.?)
-        rewrite: /$1
-      - path: /claude$
-        redirect: /claude/
